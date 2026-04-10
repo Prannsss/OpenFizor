@@ -1,0 +1,5 @@
+{
+  "name": "High-Fidelity PDF Compressor",
+  "description": "A web-based PDF compression tool and Python CLI reference implementation that preserves fonts and high-quality images.",
+  "requestFramePermissions": []
+}
