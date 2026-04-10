@@ -1,4 +1,4 @@
-import { Terminal, Copy, CheckCircle2 } from 'lucide-react';
+import { Terminal, Copy, CheckCircle2, SlidersHorizontal, Cpu, PlayCircle, Sparkles, FileBox } from 'lucide-react';
 import { useState } from 'react';
 
 export default function PythonCliView() {
@@ -141,90 +141,102 @@ Pillow==10.3.0`;
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="w-full space-y-10 font-sans">
       
-      {/* Explanation Section */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Python CLI Implementation</h2>
-          <p className="text-gray-600 mt-2 leading-relaxed">
-            If you want a runnable Python code for a CLI file compression tool, her it is guys!
-            It is specifically designed to meet your core requirements: High-Fidelity Image Preservation and Font Retention.
-          </p>
+      {/* Title Section */}
+      <div className="mb-10 max-w-2xl mx-auto text-center flex flex-col items-center">
+        <h1 className="text-4xl md:text-6xl font-bitcount font-light text-white tracking-tight leading-tight mb-4">
+          Python CLI<br />
+          <span className="text-cyan-400">Implementation</span>
+        </h1>
+        <p className="text-gray-400 text-lg leading-relaxed max-w-xl mx-auto">
+          If you want a runnable Python code for a CLI file compression tool, here it is! 
+          It is specifically designed for High-Fidelity Image and Font Retention Preservation.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Setup Requirements */}
+        <div className="bg-[#111318] rounded-xl border border-gray-800 p-6 flex flex-col h-full shadow-2xl">
+          <div className="flex items-center gap-2 mb-6">
+            <SlidersHorizontal className="w-5 h-5 text-gray-300" />
+            <h3 className="text-sm font-bold text-gray-200 tracking-widest uppercase">Setup Requirements</h3>
+          </div>
+          
+          <div className="bg-[#0a0a0a] rounded-lg border border-gray-800 mb-4 flex-grow">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800">
+              <span className="text-xs font-mono text-gray-500">requirements.txt</span>
+              <button onClick={() => copyToClipboard(reqsCode, setCopiedReqs)} className="text-gray-500 hover:text-white transition-colors">
+                {copiedReqs ? <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+            <div className="p-4">
+              <pre className="text-sm font-mono leading-loose">
+                <code className="text-cyan-400">pikepdf</code><span className="text-gray-400">==</span><span className="text-green-400">8.11.2</span><br/>
+                <code className="text-cyan-400">Pillow</code><span className="text-gray-400">==</span><span className="text-green-400">10.3.0</span>
+              </pre>
+            </div>
+          </div>
+          
+          <div className="bg-cyan-900/10 border border-cyan-900/30 rounded-lg p-4 flex gap-3 text-sm">
+            <span className="text-cyan-400 font-mono font-bold">[INFO]</span>
+            <span className="text-gray-400">Requires pikepdf and Pillow for structural optimization.</span>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-blue-50/50 rounded-xl p-5 border border-blue-100">
-            <h3 className="font-semibold text-blue-900 mb-2">PDF Compression (pikepdf)</h3>
-            <p className="text-sm text-blue-800/80 leading-relaxed">
-              I chose <strong>pikepdf</strong> (a Python wrapper for QPDF) because it performs <em>structural</em>, content-preserving transformations. Unlike Ghostscript, which can sometimes aggressively rasterize or downsample if flags aren&apos;t perfect, pikepdf strictly manipulates the PDF structure.
-            </p>
+        {/* The Core Engine */}
+        <div className="bg-[#111318] rounded-xl border border-gray-800 lg:col-span-2 p-6 flex flex-col shadow-2xl">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Cpu className="w-5 h-5 text-gray-300" />
+              <h3 className="text-sm font-bold text-gray-200 tracking-widest uppercase">The Core Engine</h3>
+            </div>
+            <div className="flex gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-gray-600/50"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-gray-600/50"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-gray-600/50"></div>
+            </div>
           </div>
-          <div className="bg-purple-50/50 rounded-xl p-5 border border-purple-100">
-            <h3 className="font-semibold text-purple-900 mb-2">Office Compression (DOCX/PPTX)</h3>
-            <p className="text-sm text-purple-800/80 leading-relaxed">
-              Office documents are ZIP archives containing XML and media. We apply <strong>Image Quantization</strong> to the embedded media: PNGs are color-reduced to 256 colors (8-bit), JPEGs undergo DCT quantization, and <strong>GIFs are converted to static frames</strong> to strip animation bloat. We then repackage the document with maximum DEFLATE compression, drastically reducing file size while preserving fonts and visual fidelity.
-            </p>
+
+          <div className="bg-[#0a0a0a] rounded-lg border border-gray-800 overflow-hidden flex-grow flex flex-col relative">
+             <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800 bg-[#0f1115] shrink-0">
+               <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">compressor.py</span>
+               <div className="flex items-center gap-3">
+                 <button onClick={() => copyToClipboard(pythonCode, setCopiedCode)} className="text-gray-500 hover:text-white transition-colors bg-gray-800/50 p-1.5 rounded-md border border-gray-700">
+                   {copiedCode ? <CheckCircle2 className="w-4 h-4 text-cyan-400" /> : <Copy className="w-4 h-4" />}
+                 </button>
+               </div>
+             </div>
+             <div className="p-4 max-h-[350px] overflow-hidden relative">
+               <pre className="text-sm font-mono text-gray-300 leading-relaxed overflow-x-auto scrollbar-none">
+                 <code>{pythonCode}</code>
+               </pre>
+               <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#0a0a0a] to-transparent pointer-events-none" />
+             </div>
           </div>
         </div>
       </div>
 
-      {/* Code Section */}
-      <div className="space-y-6">
+      {/* Execution Flow & Details */}
+      <div className="grid grid-cols-1 gap-6">
         
-        {/* Requirements */}
-        <div className="bg-gray-900 rounded-2xl overflow-hidden shadow-lg border border-gray-800">
-          <div className="flex items-center justify-between px-4 py-3 bg-gray-950 border-b border-gray-800">
-            <div className="flex items-center gap-2 text-gray-400 text-sm font-mono">
-              <Terminal className="w-4 h-4" />
-              requirements.txt
-            </div>
-            <button 
-              onClick={() => copyToClipboard(reqsCode, setCopiedReqs)}
-              className="text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 text-xs font-medium bg-gray-800 hover:bg-gray-700 px-2.5 py-1.5 rounded-md"
-            >
-              {copiedReqs ? <CheckCircle2 className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-              {copiedReqs ? 'Copied' : 'Copy'}
-            </button>
-          </div>
-          <div className="p-4 overflow-x-auto">
-            <pre className="text-sm font-mono text-gray-300">
-              <code>{reqsCode}</code>
-            </pre>
-          </div>
-        </div>
+        {/* Execution Flow */}
+        <div className="bg-[#111318] rounded-xl border border-gray-800 p-6 shadow-2xl">
+          <h3 className="text-xl font-bold text-gray-100 mb-2">Execution Flow</h3>
+          <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+            How to run the tool from your terminal.
+          </p>
 
-        {/* Python Script */}
-        <div className="bg-gray-900 rounded-2xl overflow-hidden shadow-lg border border-gray-800">
-          <div className="flex items-center justify-between px-4 py-3 bg-gray-950 border-b border-gray-800">
-            <div className="flex items-center gap-2 text-gray-400 text-sm font-mono">
-              <Terminal className="w-4 h-4" />
-              compressor.py
+          <div className="bg-[#0a0a0a] border border-gray-800 rounded-lg p-5 relative">
+            <div className="font-mono text-sm leading-loose">
+              <span className="text-gray-500">1.</span> <span className="text-gray-300">pip install -r requirements.txt</span><br/>
+              <span className="text-gray-500">2.</span> <span className="text-gray-300">python compressor.py </span><span className="text-cyan-400">input.pdf output.pdf --level high-quality</span><br/>
             </div>
-            <button 
-              onClick={() => copyToClipboard(pythonCode, setCopiedCode)}
-              className="text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 text-xs font-medium bg-gray-800 hover:bg-gray-700 px-2.5 py-1.5 rounded-md"
-            >
-              {copiedCode ? <CheckCircle2 className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-              {copiedCode ? 'Copied' : 'Copy'}
-            </button>
+            <div className="absolute top-1/2 right-4 -translate-y-1/2 w-8 h-8 rounded-full bg-cyan-900/40 flex items-center justify-center border border-cyan-500/20">
+              <PlayCircle className="w-4 h-4 text-cyan-400" />
+            </div>
           </div>
-          <div className="p-4 overflow-x-auto">
-            <pre className="text-sm font-mono text-gray-300 leading-relaxed">
-              <code>{pythonCode}</code>
-            </pre>
-          </div>
-        </div>
-
-        {/* Instructions */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">How to run the tool</h3>
-          <ol className="list-decimal list-inside space-y-3 text-gray-600">
-            <li>Save the dependencies list to a file named <code className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-sm font-mono">requirements.txt</code>.</li>
-            <li>Save the Python script to a file named <code className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-sm font-mono">compressor.py</code>.</li>
-            <li>Install the dependencies by running: <code className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-sm font-mono">pip install -r requirements.txt</code></li>
-            <li>Run the tool from your terminal: <code className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-sm font-mono">python compressor.py input.pdf output.pdf --level high-quality</code></li>
-          </ol>
         </div>
 
       </div>

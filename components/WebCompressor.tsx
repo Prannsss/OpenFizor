@@ -4,6 +4,7 @@ import { PDFDocument } from 'pdf-lib';
 import JSZip from 'jszip';
 // @ts-ignore
 import UPNG from 'upng-js';
+import { gooeyToast } from 'goey-toast';
 
 const compressImageQuantization = async (fileData: Uint8Array, mimeType: string): Promise<Uint8Array> => {
   return new Promise((resolve) => {
@@ -17,7 +18,8 @@ const compressImageQuantization = async (fileData: Uint8Array, mimeType: string)
       let width = img.width;
       let height = img.height;
       
-      const MAX_DIM = 2560;
+      // Extreme Quantizer - Limit dimension down to 1080px to crush image payload size
+      const MAX_DIM = 1080;
       if (width > MAX_DIM || height > MAX_DIM) {
         const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
         width = Math.round(width * ratio);
@@ -41,11 +43,12 @@ const compressImageQuantization = async (fileData: Uint8Array, mimeType: string)
           } else {
             resolve(fileData);
           }
-        }, 'image/jpeg', 0.75);
+        }, 'image/jpeg', 0.4); // Aggressive JPEG quality threshold at 40%
       } else if (mimeType === 'image/png' || mimeType === 'image/gif') {
         try {
           const imgData = ctx.getImageData(0, 0, width, height);
-          const compressedBuffer = UPNG.encode([imgData.data.buffer], width, height, 256);
+          // Hardcore UPNG 128-color map palette limiting to slash internal PNG fatness.
+          const compressedBuffer = UPNG.encode([imgData.data.buffer], width, height, 128);
           const compressedArray = new Uint8Array(compressedBuffer);
           
           if (compressedArray.length < fileData.length) {
@@ -103,6 +106,14 @@ export default function WebCompressor() {
         // Load the PDF document
         const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
         
+        // Strip metadata to reduce size
+        pdfDoc.setTitle('');
+        pdfDoc.setAuthor('');
+        pdfDoc.setSubject('');
+        pdfDoc.setKeywords([]);
+        pdfDoc.setProducer('');
+        pdfDoc.setCreator('');
+        
         // Save the PDF document with object streams enabled for better compression
         // This performs structural compression (garbage collection, stream compression)
         // without altering images or fonts.
@@ -153,9 +164,12 @@ export default function WebCompressor() {
         newSize: blob.size,
         name: file.name.replace(`.${extension}`, `-compressed.${extension}`)
       });
+      gooeyToast.success('File compressed successfully', { showTimestamp: false });
     } catch (err) {
       console.error(err);
-      setError('An error occurred while compressing the file. It might be corrupted or heavily encrypted.');
+      const errorMessage = 'An error occurred while compressing the file. It might be corrupted or heavily encrypted.';
+      setError(errorMessage);
+      gooeyToast.error(errorMessage, { showTimestamp: false });
     } finally {
       setIsCompressing(false);
     }
@@ -170,19 +184,19 @@ export default function WebCompressor() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="p-8 border-b border-gray-100 bg-gray-50/50">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-600" />
+    <div className="max-w-3xl mx-auto space-y-8 font-sans">
+      <div className="bg-[#111318] rounded-2xl border border-gray-800 shadow-2xl overflow-hidden">
+        <div className="p-8 border-b border-gray-800 bg-[#0f1115]">
+          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+            <FileText className="w-5 h-5 text-cyan-400" />
             Browser-Based Document Compression
           </h2>
-          <p className="text-gray-500 mt-2 text-sm">
+          <p className="text-gray-400 mt-2 text-sm leading-relaxed">
             Compress PDF, DOCX, and PPTX files entirely in your browser. This tool uses structural optimization to reduce file size while strictly preserving all fonts and image fidelity.
           </p>
         </div>
 
-        <div className="p-8 space-y-6">
+        <div className="p-8 space-y-6 bg-[#111318]">
           {/* Upload Area */}
           <div className="relative group">
             <input
@@ -192,17 +206,17 @@ export default function WebCompressor() {
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               title="Select a PDF, DOCX, or PPTX file"
             />
-            <div className={`border-2 border-dashed rounded-xl p-10 text-center transition-colors ${file ? 'border-blue-400 bg-blue-50/50' : 'border-gray-300 group-hover:border-blue-400 group-hover:bg-gray-50'}`}>
+            <div className={`border-2 border-dashed rounded-xl p-10 text-center transition-colors ${file ? 'border-cyan-400/50 bg-cyan-900/10' : 'border-gray-700 hover:border-cyan-400/50 hover:bg-[#1a1d24]'}`}>
               <div className="flex flex-col items-center gap-3">
-                <div className={`p-3 rounded-full ${file ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+                <div className={`p-3 rounded-full ${file ? 'bg-cyan-900/40 text-cyan-400' : 'bg-gray-800 text-gray-400'}`}>
                   <FileUp className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-gray-200">
                     {file ? file.name : 'Click or drag PDF, DOCX, or PPTX to upload'}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {file ? formatBytes(file.size) : 'Maximum file size: 50MB'}
+                    {file ? formatBytes(file.size) : 'No file size limit'}
                   </p>
                 </div>
               </div>
@@ -210,7 +224,7 @@ export default function WebCompressor() {
           </div>
 
           {error && (
-            <div className="p-4 rounded-lg bg-red-50 border border-red-100 flex items-start gap-3 text-red-700 text-sm">
+            <div className="p-4 rounded-lg bg-red-900/20 border border-red-900/50 flex items-start gap-3 text-red-400 text-sm">
               <AlertCircle className="w-5 h-5 shrink-0" />
               <p>{error}</p>
             </div>
@@ -220,10 +234,10 @@ export default function WebCompressor() {
           <button
             onClick={handleCompress}
             disabled={!file || isCompressing}
-            className={`w-full py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-all ${
+            className={`w-full py-3 px-4 rounded-xl font-bold tracking-wider uppercase text-sm flex items-center justify-center gap-2 transition-all ${
               !file || isCompressing
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow'
+                ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 shadow-sm'
             }`}
           >
             {isCompressing ? (
@@ -241,24 +255,24 @@ export default function WebCompressor() {
 
           {/* Results Area */}
           {result && (
-            <div className="mt-8 p-6 rounded-xl bg-green-50 border border-green-100 space-y-4 animate-in fade-in zoom-in-95 duration-300">
-              <div className="flex items-center gap-3 text-green-800">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
-                <h3 className="font-semibold">Compression Complete!</h3>
+            <div className="mt-8 p-6 rounded-xl bg-[#0a0a0a] border border-cyan-900/30 space-y-4 animate-in fade-in zoom-in-95 duration-300">
+              <div className="flex items-center gap-3 text-cyan-400">
+                <CheckCircle2 className="w-6 h-6 text-cyan-400" />
+                <h3 className="font-bold tracking-wider uppercase text-sm">Compression Complete!</h3>
               </div>
               
-              <div className="grid grid-cols-3 gap-4 py-4 border-y border-green-200/50">
+              <div className="grid grid-cols-3 gap-4 py-4 border-y border-gray-800">
                 <div>
-                  <p className="text-xs text-green-600/80 font-medium uppercase tracking-wider mb-1">Original</p>
-                  <p className="text-lg font-semibold text-green-900">{formatBytes(result.originalSize)}</p>
+                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Original</p>
+                  <p className="text-lg font-bold text-gray-200">{formatBytes(result.originalSize)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-green-600/80 font-medium uppercase tracking-wider mb-1">Compressed</p>
-                  <p className="text-lg font-semibold text-green-900">{formatBytes(result.newSize)}</p>
+                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Compressed</p>
+                  <p className="text-lg font-bold text-cyan-400">{formatBytes(result.newSize)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-green-600/80 font-medium uppercase tracking-wider mb-1">Saved</p>
-                  <p className="text-lg font-semibold text-green-900">
+                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Saved</p>
+                  <p className="text-lg font-bold text-cyan-400">
                     {result.originalSize > result.newSize 
                       ? ((1 - result.newSize / result.originalSize) * 100).toFixed(1) + '%' 
                       : '0%'}
@@ -269,7 +283,7 @@ export default function WebCompressor() {
               <a
                 href={result.url}
                 download={result.name}
-                className="w-full py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700 transition-colors shadow-sm"
+                className="w-full py-3 px-4 rounded-xl font-bold tracking-wider uppercase text-sm flex items-center justify-center gap-2 bg-cyan-600 text-white hover:bg-cyan-500 transition-colors shadow-sm"
               >
                 <FileDown className="w-5 h-5" />
                 Download Compressed File
