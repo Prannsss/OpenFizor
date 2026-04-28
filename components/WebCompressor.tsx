@@ -78,11 +78,11 @@ export default function WebCompressor() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selected = e.target.files[0];
-      const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
+      const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'image/jpeg', 'image/png', 'image/jpg'];
       const extension = selected.name.split('.').pop()?.toLowerCase();
       
-      if (!validTypes.includes(selected.type) && !['pdf', 'docx', 'pptx'].includes(extension || '')) {
-        setError('Please select a valid PDF, DOCX, or PPTX file.');
+      if (!validTypes.includes(selected.type) && !['pdf', 'docx', 'pptx', 'jpg', 'jpeg', 'png'].includes(extension || '')) {
+        setError('Please select a valid PDF, DOCX, PPTX, JPG, or PNG file.');
         return;
       }
       setFile(selected);
@@ -152,6 +152,12 @@ export default function WebCompressor() {
             level: 9
           }
         });
+      } else if (['png', 'jpg', 'jpeg'].includes(extension || '')) {
+        const arrayBuffer = await file.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        const mimeType = file.type || (extension === 'png' ? 'image/png' : 'image/jpeg');
+        const compressedUint8 = await compressImageQuantization(uint8Array, mimeType);
+        blob = new Blob([new Uint8Array(compressedUint8)], { type: mimeType });
       } else {
         throw new Error('Unsupported file format');
       }
@@ -189,10 +195,10 @@ export default function WebCompressor() {
         <div className="p-8 border-b border-gray-800 bg-[#0f1115]">
           <h2 className="text-xl font-semibold text-white flex items-center gap-2">
             <FileText className="w-5 h-5 text-cyan-400" />
-            Browser-Based Document Compression
+            Browser-Based Anything Compressor
           </h2>
           <p className="text-gray-400 mt-2 text-sm leading-relaxed">
-            Compress PDF, DOCX, and PPTX files entirely in your browser. This tool uses structural optimization to reduce file size while strictly preserving all fonts and image fidelity.
+            Compress PDF, DOCX, PPTX, JPG, and PNG files entirely in your browser. This tool reduces file size while preserving fidelity.
           </p>
         </div>
 
@@ -201,10 +207,10 @@ export default function WebCompressor() {
           <div className="relative group">
             <input
               type="file"
-              accept=".pdf,.docx,.pptx"
+              accept=".pdf,.docx,.pptx,.jpg,.jpeg,.png"
               onChange={handleFileChange}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-              title="Select a PDF, DOCX, or PPTX file"
+              title="Select a PDF, DOCX, PPTX, JPG, or PNG file"
             />
             <div className={`border-2 border-dashed rounded-xl p-10 text-center transition-colors ${file ? 'border-cyan-400/50 bg-cyan-900/10' : 'border-gray-700 hover:border-cyan-400/50 hover:bg-[#1a1d24]'}`}>
               <div className="flex flex-col items-center gap-3">
@@ -213,7 +219,7 @@ export default function WebCompressor() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-200">
-                    {file ? file.name : 'Click or drag PDF, DOCX, or PPTX to upload'}
+                    {file ? file.name : 'Click or drag PDF, DOCX, PPTX, JPG, or PNG to upload'}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     {file ? formatBytes(file.size) : 'No file size limit'}
