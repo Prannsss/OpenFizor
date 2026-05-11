@@ -6,7 +6,11 @@ import JSZip from 'jszip';
 import UPNG from 'upng-js';
 import { gooeyToast } from 'goey-toast';
 
-const compressImageQuantization = async (fileData: Uint8Array, mimeType: string): Promise<Uint8Array> => {
+const compressImageQuantization = async (
+  fileData: Uint8Array,
+  mimeType: string,
+  level: 'medium' | 'highest' = 'medium'
+): Promise<Uint8Array> => {
   return new Promise((resolve) => {
     const blob = new Blob([new Uint8Array(fileData)], { type: mimeType });
     const url = URL.createObjectURL(blob);
@@ -17,9 +21,12 @@ const compressImageQuantization = async (fileData: Uint8Array, mimeType: string)
       const canvas = document.createElement('canvas');
       let width = img.width;
       let height = img.height;
-      
-      // Extreme Quantizer - Limit dimension down to 1080px to crush image payload size
-      const MAX_DIM = 1080;
+
+      // Choose parameters based on requested compression level
+      const MAX_DIM = level === 'highest' ? 720 : 1080;
+      const JPEG_QUALITY = level === 'highest' ? 0.15 : 0.4; // lowest quality for highest compression
+      const UPNG_COLORS = level === 'highest' ? 64 : 128;
+
       if (width > MAX_DIM || height > MAX_DIM) {
         const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
         width = Math.round(width * ratio);
@@ -43,12 +50,12 @@ const compressImageQuantization = async (fileData: Uint8Array, mimeType: string)
           } else {
             resolve(fileData);
           }
-        }, 'image/jpeg', 0.4); // Aggressive JPEG quality threshold at 40%
+        }, 'image/jpeg', JPEG_QUALITY);
       } else if (mimeType === 'image/png' || mimeType === 'image/gif') {
         try {
           const imgData = ctx.getImageData(0, 0, width, height);
           // Hardcore UPNG 128-color map palette limiting to slash internal PNG fatness.
-          const compressedBuffer = UPNG.encode([imgData.data.buffer], width, height, 128);
+          const compressedBuffer = UPNG.encode([imgData.data.buffer], width, height, UPNG_COLORS);
           const compressedArray = new Uint8Array(compressedBuffer);
           
           if (compressedArray.length < fileData.length) {
@@ -74,6 +81,7 @@ export default function WebCompressor() {
   const [isCompressing, setIsCompressing] = useState(false);
   const [result, setResult] = useState<{ url: string; originalSize: number; newSize: number; name: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [compressionLevel, setCompressionLevel] = useState<'medium' | 'highest'>('medium');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -134,7 +142,7 @@ export default function WebCompressor() {
                 const ext = relativePath.split('.').pop()?.toLowerCase();
                 const mimeType = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
                 
-                const compressedUint8 = await compressImageQuantization(uint8Array, mimeType);
+                const compressedUint8 = await compressImageQuantization(uint8Array, mimeType, compressionLevel);
                 loadedZip.file(relativePath, compressedUint8);
               } catch (e) {
                 console.error(`Failed to compress ${relativePath}`, e);
@@ -156,7 +164,7 @@ export default function WebCompressor() {
         const arrayBuffer = await file.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
         const mimeType = file.type || (extension === 'png' ? 'image/png' : 'image/jpeg');
-        const compressedUint8 = await compressImageQuantization(uint8Array, mimeType);
+        const compressedUint8 = await compressImageQuantization(uint8Array, mimeType, compressionLevel);
         blob = new Blob([new Uint8Array(compressedUint8)], { type: mimeType });
       } else {
         throw new Error('Unsupported file format');
@@ -202,7 +210,20 @@ export default function WebCompressor() {
           </p>
         </div>
 
-        <div className="p-8 space-y-6 bg-[#111318]">
+          <div className="p-8 space-y-6 bg-[#111318]">
+          {/* Compression level selector */}
+          <div className="flex items-center gap-4">
+            <label className="text-sm text-gray-300 font-medium">Compression:</label>
+            <select
+              value={compressionLevel}
+              onChange={(e) => setCompressionLevel(e.target.value as 'medium' | 'highest')}
+              className="bg-[#0f1115] border border-gray-700 text-gray-200 rounded-md py-1 px-2"
+              title="Choose Medium (default) or Highest (more aggressive, lower quality)"
+            >
+              <option value="medium">Medium — balanced quality</option>
+              <option value="highest">Highest — maximum compression, lower quality</option>
+            </select>
+          </div>
           {/* Upload Area */}
           <div className="relative group">
             <input
